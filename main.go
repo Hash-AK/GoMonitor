@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 func main() {
@@ -48,12 +49,38 @@ func main() {
 	infoPanel.SetDynamicColors(true)
 	infoPanel.SetText(OSInfoText)
 	// Memory Section
+	v, _ := mem.VirtualMemory()
+	totalMem := v.Total
+	usedMem := v.Used
+	usedMemPercent := v.UsedPercent
+	var memSign string
+	if (totalMem) >= 10000000000000 {
+		totalMem = totalMem / 10000000000000
+		usedMem = usedMem / 10000000000000
+		memSign = "TB"
+	} else if (totalMem) >= 1000000000 {
+		totalMem = totalMem / 1000000000
+		usedMem = usedMem / 1000000000
+		memSign = "GB"
 
+	} else if (totalMem) >= 100000 {
+		totalMem = totalMem / 1000000
+		memSign = "MB"
+		usedMem = usedMem / 1000000
+	}
+	var usedMemPercentString string
+	if usedMemPercent >= 50 {
+		usedMemPercentString = fmt.Sprintf("[red]%f[::-]", usedMemPercent)
+	} else {
+		usedMemPercentString = fmt.Sprintf("%f", usedMemPercent)
+
+	}
+	memText := fmt.Sprintf("Total Memory: %v%s\nUsed Memory: %v%s (%s%%)\n", totalMem, memSign, usedMem, memSign, usedMemPercentString)
 	memPanel := tview.NewTextView()
 	memPanel.SetBorder(true)
 	memPanel.SetTitle("Memory")
 	memPanel.SetDynamicColors(true)
-
+	memPanel.SetText(memText)
 	// General Layout
 	rightColumnLayout := tview.NewFlex().SetDirection(tview.FlexRow)
 	rightColumnLayout.AddItem(cpuPanel, 0, 1, false)
