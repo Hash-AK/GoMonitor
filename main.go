@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -15,6 +16,10 @@ func main() {
 	cpuCountPhys, _ := cpu.Counts(false)
 	cpuCountLogical, _ := cpu.Counts(true)
 	cpuCountText := fmt.Sprintf("CPU count physical/logical: %v/%v", cpuCountPhys, cpuCountLogical)
+	cpuInfo, _ := cpu.Info()
+	cpuModelName := cpuInfo[0].ModelName
+	//cpuManufacturer := cpuInfo[0].VendorID
+	//cpuFreq := cpuInfo[0].Mhz
 
 	cpuPanel := tview.NewTextView()
 	cpuPanel.SetText(cpuCountText)
@@ -31,7 +36,11 @@ func main() {
 	OSArch, _ := host.KernelArch()
 	hostInfo, _ := host.Info()
 	hostname := hostInfo.Hostname
-	OSInfoText := fmt.Sprintf("OS : %s %s\nKernel Version : %s\nHostname : %s", OSPlatform, OSArch, KernelVersion, hostname)
+	uptime := hostInfo.Uptime
+	var uptimeInt int
+	uptimeInt = int(uptime)
+	uptimeString := time.Duration(uptimeInt) * time.Second
+	OSInfoText := fmt.Sprintf("OS : %s %s\nKernel Version: %s\nHostname: %s\nUptime: %s\nCPU Model: %s\n", OSPlatform, OSArch, KernelVersion, hostname, uptimeString, cpuModelName)
 
 	infoPanel := tview.NewTextView()
 	infoPanel.SetBorder(true)
