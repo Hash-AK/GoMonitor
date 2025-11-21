@@ -81,10 +81,12 @@ func main() {
 
 	}
 	var usedMemPercentString string
-	if usedMemPercent >= 50 {
-		usedMemPercentString = fmt.Sprintf("[red]%f[::-]", usedMemPercent)
+	if usedMemPercent >= 80 {
+		usedMemPercentString = fmt.Sprintf("[red]%.2f[::-]", usedMemPercent)
+	} else if usedMemPercent >= 50 {
+		usedMemPercentString = fmt.Sprintf("[yellow]%.2f[::-]", usedMemPercent)
 	} else {
-		usedMemPercentString = fmt.Sprintf("%f", usedMemPercent)
+		usedMemPercentString = fmt.Sprintf("%.2f", usedMemPercent)
 
 	}
 	memText := fmt.Sprintf("Total Memory: %v%s\nUsed Memory: %v%s (%s%%)\n", totalMem, memSign, usedMem, usedMemSign, usedMemPercentString)
@@ -127,6 +129,7 @@ func main() {
 			totalMem := v.Total
 			usedMem := v.Used
 			usedMemPercent := v.UsedPercent
+
 			var memSign string
 			if (totalMem) >= 10000000000000 {
 				totalMem = totalMem / 10000000000000
@@ -143,8 +146,10 @@ func main() {
 				usedMem = usedMem / 1000000
 			}
 			var usedMemPercentString string
-			if usedMemPercent >= 50 {
-				usedMemPercentString = fmt.Sprintf("[red]%f[::-]", usedMemPercent)
+			if usedMemPercent >= 80 {
+				usedMemPercentString = fmt.Sprintf("[red]%.2f[::-]", usedMemPercent)
+			} else if usedMemPercent >= 50 {
+				usedMemPercentString = fmt.Sprintf("[yellow]%.2f[::-]", usedMemPercent)
 			} else {
 				usedMemPercentString = fmt.Sprintf("%f", usedMemPercent)
 
