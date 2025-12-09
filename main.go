@@ -49,6 +49,7 @@ type UserPreferences struct {
 	BarFilledChar string `toml:"BarFilledChar"`
 	BarEmptyChar  string `toml:"BarEmptyChar"`
 	ThemeName     string `toml:"ThemeName"`
+	UseBackground bool   `toml:"UseBackground"`
 }
 
 var userPrefs UserPreferences
@@ -70,6 +71,7 @@ const defaultUserPreferencesTOML = `
 BarFilledChar = "❄"
 BarEmptyChar = "-"
 ThemeName = "Default"
+UseBackground = true
 `
 
 var defaultTheme = Theme{
@@ -212,43 +214,58 @@ func loadOrCreateUsersPreferences() {
 	toml.DecodeFile(fullPath, &userPrefs)
 
 }
-func applyTheme(theme *Theme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu *tview.TextView, grid *tview.Grid, themeSelector *tview.DropDown, settings *tview.Form) {
+func applyTheme(theme *Theme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu *tview.TextView, grid *tview.Grid, themeSelector *tview.DropDown, settings *tview.Form, userPrefs UserPreferences) {
 	cpuPanel.SetBorderColor(theme.CPUPanel.BorderColor)
 	cpuPanel.SetTitleColor(theme.CPUPanel.TitleColor)
 	cpuPanel.SetTextColor(theme.CPUPanel.TextColor)
-	cpuPanel.SetBackgroundColor(theme.CPUPanel.BackGroundColor)
+	if userPrefs.UseBackground {
+		cpuPanel.SetBackgroundColor(theme.CPUPanel.BackGroundColor)
+		memPanel.SetBackgroundColor(theme.MemPanel.BackGroundColor)
+		infoPanel.SetBackgroundColor(theme.InfoPanel.BackGroundColor)
+		tempPanel.SetBackgroundColor(theme.TempPanel.BackGroundColor)
+		diskPanel.SetBackgroundColor(theme.DiskPanel.BackGroundColor)
+		tview.Styles.PrimitiveBackgroundColor = theme.Backgroundcolor
+		themeSelector.SetFieldBackgroundColor(theme.InfoPanel.BackGroundColor)
+		settings.SetBackgroundColor(theme.Backgroundcolor)
+		keyBindMenu.SetBackgroundColor(theme.Backgroundcolor)
+
+		grid.SetBackgroundColor(theme.Backgroundcolor)
+
+	} else {
+		cpuPanel.SetBackgroundColor(tcell.ColorDefault)
+		memPanel.SetBackgroundColor(tcell.ColorDefault)
+		infoPanel.SetBackgroundColor(tcell.ColorDefault)
+		tempPanel.SetBackgroundColor(tcell.ColorDefault)
+		diskPanel.SetBackgroundColor(tcell.ColorDefault)
+		tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
+		themeSelector.SetFieldBackgroundColor(tcell.ColorDefault)
+		settings.SetBackgroundColor(tcell.ColorDefault)
+		keyBindMenu.SetBackgroundColor(tcell.ColorDefault)
+		grid.SetBackgroundColor(tcell.ColorDefault)
+	}
 
 	memPanel.SetBorderColor(theme.MemPanel.BorderColor)
 	memPanel.SetTitleColor(theme.MemPanel.TitleColor)
 	memPanel.SetTextColor(theme.MemPanel.TextColor)
-	memPanel.SetBackgroundColor(theme.MemPanel.BackGroundColor)
 
 	infoPanel.SetBorderColor(theme.InfoPanel.BorderColor)
 	infoPanel.SetTitleColor(theme.InfoPanel.TitleColor)
 	infoPanel.SetTextColor(theme.InfoPanel.TextColor)
-	infoPanel.SetBackgroundColor(theme.InfoPanel.BackGroundColor)
 
 	tempPanel.SetBorderColor(theme.TempPanel.BorderColor)
 	tempPanel.SetTitleColor(theme.TempPanel.TitleColor)
 	tempPanel.SetTextColor(theme.TempPanel.TextColor)
-	tempPanel.SetBackgroundColor(theme.TempPanel.BackGroundColor)
 
 	diskPanel.SetBorderColor(theme.DiskPanel.BorderColor)
 	diskPanel.SetTitleColor(theme.DiskPanel.TitleColor)
 	diskPanel.SetTextColor(theme.DiskPanel.TextColor)
-	diskPanel.SetBackgroundColor(theme.DiskPanel.BackGroundColor)
 
 	keyBindMenu.SetBorderColor(theme.InfoPanel.BorderColor)
 	keyBindMenu.SetTextColor(theme.InfoPanel.TextColor)
-	keyBindMenu.SetBackgroundColor(theme.Backgroundcolor)
-	tview.Styles.PrimitiveBackgroundColor = theme.Backgroundcolor
-	grid.SetBackgroundColor(theme.Backgroundcolor)
 
 	themeSelector.SetLabelColor(theme.InfoPanel.TitleColor)
 	themeSelector.SetFieldTextColor(theme.InfoPanel.TextColor)
-	themeSelector.SetFieldBackgroundColor(theme.InfoPanel.BackGroundColor)
 	themeSelector.SetListStyles(theme.DropDownOptionStyle, theme.DropDownSelectedStyle)
-	settings.SetBackgroundColor(theme.Backgroundcolor)
 
 }
 func formatBytes(value uint64) string {
@@ -301,8 +318,7 @@ func updateInfos(app *tview.Application, cpuPanel, memPanel, infoPanel, diskPane
 	hostInfo, _ := host.Info()
 	hostname := staticInfo.Hostname
 	uptime := hostInfo.Uptime
-	var uptimeInt int
-	uptimeInt = int(uptime)
+	var uptimeInt = int(uptime)
 	uptimeString := time.Duration(uptimeInt) * time.Second
 	logo := staticInfo.Logo
 	OSInfoText := fmt.Sprintf("%s❄ OS: %s %s\n❄ OS family: %s\n❄ OS version: %s\n❄ Kernel Version: %s\n❄ Hostname: %s\n❄ Uptime: %s\n❄ Current date: %s\nCPU Model: %s", logo, OSPlatform, OSArch, OSFamily, OSVersion, KernelVersion, hostname, uptimeString, formatedTime, cpuModelName)
@@ -512,7 +528,7 @@ func main() {
 	keyBindMenu.SetBorder(true)
 	keyBindMenu.SetTitle("Keybinds - ESC or 'h' to go back")
 	keyBindMenu.SetText("'q'/CTRL + C - quit the application\n's' - open the settings page\nTAB/Arrow keys - navigate in the settings page\nESC - quit the settings/help page\n'h' - open the help page (this page)\n\n\nMade by @Hash-AK (https://github.com/hash-ak)")
-	applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings)
+	applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings, userPrefs)
 
 	pages := tview.NewPages()
 	pages.AddPage("settings", settings, true, false)
@@ -552,14 +568,14 @@ func main() {
 		switch selection {
 		case "Default":
 			currentTheme = &defaultTheme
-			applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings)
+			applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings, userPrefs)
 
 		case "Nord":
 			currentTheme = &nordTheme
-			applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings)
+			applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings, userPrefs)
 		case "Snow Day":
 			currentTheme = &snowTheme
-			applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings)
+			applyTheme(currentTheme, cpuPanel, memPanel, infoPanel, tempPanel, diskPanel, keyBindMenu, mainGrid, themeSelector, settings, userPrefs)
 		}
 		userPrefs.ThemeName = selection
 		saveToFile(userPrefs)
